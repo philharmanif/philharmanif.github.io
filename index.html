@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>La Philharmanif</title>
+  <style>
+    :root {
+      --fond: #fdf3ee;
+      --rouge: #ff3d2e;
+      --orange: #ff8a4c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      background: var(--fond);
+      font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    }
+    img {
+      width: 100%;
+      max-width: 480px;
+      height: auto;
+      border-radius: 24px;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    nav a {
+      padding: 0.7rem 1.6rem;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--rouge), var(--orange));
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    nav a:hover { filter: brightness(1.08); }
+    nav a:focus-visible { outline: 3px solid var(--rouge); outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <img src="pics/philarmanif.png" alt="La Philharmanif, ensemble musical en lutte">
+  <nav>
+    <a href="parolier/">Parolier</a>
+    <a href="orchestre/">Orchestre</a>
+    <a href="chorale/">Chorale</a>
+  </nav>
+</body>
+</html>
