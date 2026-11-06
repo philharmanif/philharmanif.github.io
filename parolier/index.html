@@ -1,24 +1,254 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Parolier – La Philharmanif</title>
-  <link rel="icon" type="image/png" href="../pics/favicon.png">  
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #fdf3ee;
-      color: #ff3d2e;
-      font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
-      font-size: 2.5rem;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parolier - La Philharmanif</title>
+<link rel="icon" type="image/png" href="../pics/favicon.png">
+<style>
+:root {
+  --fond: #fdf3ee;
+  --rouge: #ff3d2e;
+  --orange: #ff8a4c;
+  --texte: #3a2a25;
+  --discret: #8a4a3c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 1.5rem 1rem 3rem;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+header img {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  margin: 0 auto 1.5rem;
+  border-radius: 16px;
+}
+
+/* le menu déroulant */
+.choix { position: relative; }
+
+#titre-btn {
+  width: 100%;
+  padding: 0.7rem 1.4rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--rouge), var(--orange));
+  color: #fff;
+  font: bold 1.3rem "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+}
+#titre-btn:hover { filter: brightness(1.08); }
+#titre-btn:focus-visible { outline: 3px solid var(--rouge); outline-offset: 3px; }
+
+#liste {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0.4rem 0 0;
+  padding: 0.4rem;
+  list-style: none;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: #fff;
+  border: 2px solid var(--orange);
+  border-radius: 18px;
+  z-index: 10;
+}
+#liste.ouverte { display: block; }
+
+#liste button {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--texte);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+#liste button:hover,
+#liste button:focus-visible { background: var(--fond); outline: none; }
+#liste button.courante { font-weight: bold; color: var(--rouge); }
+
+/* la chanson affichée */
+.infos {
+  margin: 1.5rem 0 1rem;
+  color: var(--discret);
+  font-size: 0.95rem;
+}
+.infos p { margin: 0.2rem 0; }
+
+#paroles {
+  font-size: 1.1rem;
+}
+#paroles p { margin: 0 0 1.3rem; }
+
+#message { color: var(--discret); text-align: center; margin-top: 2rem; }
+
+footer {
+  max-width: 40rem;
+  margin: 3rem auto 0;
+  text-align: center;
+  font-size: 0.85rem;
+}
+footer a { color: var(--discret); }
+</style>
 </head>
-<body>soon</body>
+<body>
+
+
+<main>
+  <div class="choix">
+    <button id="titre-btn" aria-haspopup="listbox" aria-expanded="false">
+      <span id="titre">Choisir une chanson</span>
+      <span aria-hidden="true">▾</span>
+    </button>
+    <ul id="liste" role="listbox"></ul>
+  </div>
+
+  <div class="infos" id="infos"></div>
+  <div id="paroles"></div>
+  <p id="message">Chargement des chansons…</p>
+</main>
+
+<footer>
+  <a href="../">Retour à l'accueil</a>
+</footer>
+
+<script>
+var chansons = [];
+
+var bouton = document.getElementById('titre-btn');
+var titre = document.getElementById('titre');
+var liste = document.getElementById('liste');
+var infos = document.getElementById('infos');
+var paroles = document.getElementById('paroles');
+var message = document.getElementById('message');
+
+// on échappe d'abord le HTML, puis on remplace le markdown
+function markdown(src) {
+  var html = src
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+  // une ligne vide = nouveau paragraphe (strophe), un retour à la ligne = <br>
+  return html
+    .split(/\n\s*\n/)
+    .map(function (strophe) {
+      return '<p>' + strophe.trim().replace(/\n/g, '<br>') + '</p>';
+    })
+    .join('');
+}
+
+function afficher(i) {
+  var c = chansons[i];
+  titre.textContent = c.titre;
+
+  // on n'affiche que les champs remplis
+  infos.innerHTML = '';
+  var lignes = [
+    ['Texte', c.texte],
+    ['Musique', c.musique],
+    ['Arrangement', c.arrangement]
+  ];
+  lignes.forEach(function (l) {
+    if (l[1] && l[1].trim()) {
+      var p = document.createElement('p');
+      p.textContent = l[0] + ' : ' + l[1];
+      infos.appendChild(p);
+    }
+  });
+
+  if (c.paroles && c.paroles.trim()) {
+    paroles.innerHTML = markdown(c.paroles);
+  } else {
+    paroles.innerHTML = '';
+  }
+
+  var boutons = liste.querySelectorAll('button');
+  for (var k = 0; k < boutons.length; k++) {
+    boutons[k].classList.toggle('courante', k === i);
+  }
+  history.replaceState(null, '', '#' + (i + 1));
+}
+
+function ouvrir(oui) {
+  liste.classList.toggle('ouverte', oui);
+  bouton.setAttribute('aria-expanded', oui);
+}
+
+bouton.addEventListener('click', function () {
+  ouvrir(!liste.classList.contains('ouverte'));
+});
+
+// clic en dehors ou Échap : on ferme
+document.addEventListener('click', function (e) {
+  if (!e.target.closest('.choix')) ouvrir(false);
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') ouvrir(false);
+});
+
+fetch('chansons.json')
+  .then(function (r) {
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  })
+  .then(function (data) {
+    chansons = data;
+    if (!chansons.length) {
+      message.textContent = 'Aucune chanson pour le moment.';
+      return;
+    }
+
+    chansons.forEach(function (c, i) {
+      var li = document.createElement('li');
+      var b = document.createElement('button');
+      b.textContent = c.titre;
+      b.addEventListener('click', function () {
+        afficher(i);
+        ouvrir(false);
+      });
+      li.appendChild(b);
+      liste.appendChild(li);
+    });
+
+    message.hidden = true;
+
+    // si l'adresse finit par #3, on ouvre la 3e chanson directement
+    var n = parseInt(location.hash.slice(1), 10);
+    if (n >= 1 && n <= chansons.length) afficher(n - 1);
+  })
+  .catch(function () {
+    message.textContent = 'Impossible de charger chansons.json.';
+  });
+</script>
+
+</body>
 </html>

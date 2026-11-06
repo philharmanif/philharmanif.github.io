@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outil paroles</title>
+</head>
+<body>
+
+<h1>Outil paroles</h1>
+<p>Remplis les champs, copie la ligne obtenue et colle-la dans <code>parolier/chansons.json</code>.</p>
+
+<p>
+  <button type="button" id="gras" title="Gras (Ctrl+B)"><b>B</b></button>
+  <button type="button" id="italique" title="Italique (Ctrl+I)"><i>I</i></button>
+  <button type="button" id="effacer">Effacer</button>
+  <button type="button" id="exemple">Exemple</button>
+</p>
+
+<p>
+  <label>Titre<br>
+  <input type="text" id="titre" size="40"></label>
+</p>
+
+<p>
+  <label>Texte (nom du parolier)<br>
+  <input type="text" id="texte" size="40"></label>
+</p>
+
+<p>
+  <label>Musique (nom du compositeur)<br>
+  <input type="text" id="musique" size="40"></label>
+</p>
+
+<p>
+  <label>Arrangement<br>
+  <input type="text" id="arrangement" size="40"></label>
+</p>
+
+<p>
+  <label>Paroles<br>
+  <textarea id="paroles" rows="18" cols="60"></textarea></label><br>
+  <small>Sélectionne du texte puis clique sur B ou I. Une ligne vide pour changer de couplet.</small>
+</p>
+
+<h2>Ligne à ajouter</h2>
+<p>
+  <textarea id="sortie" rows="6" cols="60" readonly></textarea><br>
+  <button type="button" id="copier">Copier</button>
+  <small>(Le dernier élément du fichier ne doit pas finir par une virgule.)</small>
+</p>
+
+<dialog id="confirmation">
+  <p>Tout effacer ?</p>
+  <button type="button" id="oui">Oui</button>
+  <button type="button" id="non">Non</button>
+</dialog>
+
+<script>
+var champs = ['titre', 'texte', 'musique', 'arrangement', 'paroles'];
+var paroles = document.getElementById('paroles');
+var sortie = document.getElementById('sortie');
+
+function maj() {
+  var chanson = {};
+  champs.forEach(function (nom) {
+    chanson[nom] = document.getElementById(nom).value.trim();
+  });
+  // JSON.stringify s'occupe des guillemets, apostrophes et retours à la ligne
+  sortie.value = JSON.stringify(chanson) + ',';
+}
+
+// entoure la sélection avec ** (gras) ou * (italique)
+function entourer(marque) {
+  var debut = paroles.selectionStart;
+  var fin = paroles.selectionEnd;
+  var v = paroles.value;
+  paroles.value = v.slice(0, debut) + marque + v.slice(debut, fin) + marque + v.slice(fin);
+  paroles.focus();
+  paroles.setSelectionRange(debut + marque.length, fin + marque.length);
+  maj();
+}
+
+document.getElementById('gras').addEventListener('click', function () {
+  entourer('**');
+});
+
+document.getElementById('italique').addEventListener('click', function () {
+  entourer('*');
+});
+
+paroles.addEventListener('keydown', function (e) {
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === 'b') {
+      e.preventDefault();
+      entourer('**');
+    } else if (e.key === 'i') {
+      e.preventDefault();
+      entourer('*');
+    }
+  }
+});
+
+var confirmation = document.getElementById('confirmation');
+
+document.getElementById('effacer').addEventListener('click', function () {
+  confirmation.showModal();
+});
+
+document.getElementById('non').addEventListener('click', function () {
+  confirmation.close();
+});
+
+document.getElementById('oui').addEventListener('click', function () {
+  champs.forEach(function (nom) {
+    document.getElementById(nom).value = '';
+  });
+  maj();
+  confirmation.close();
+});
+
+document.getElementById('exemple').addEventListener('click', function () {
+  document.getElementById('titre').value = "Chanson d'exemple";
+  document.getElementById('texte').value = 'Prénom Nom';
+  document.getElementById('musique').value = 'Prénom Nom';
+  document.getElementById('arrangement').value = 'Prénom Nom';
+  paroles.value = "Voici des **paroles** en gras\nEt du texte en *italique*\nAvec des apostrophes : l'amour et l'été\n\nCeci est un ***texte en gras et italique***\nEt voici des \"guillemets\"";
+  maj();
+});
+
+champs.forEach(function (nom) {
+  document.getElementById(nom).addEventListener('input', maj);
+});
+
+document.getElementById('copier').addEventListener('click', function () {
+  sortie.select();
+  document.execCommand('copy');
+});
+
+maj();
+</script>
+
+</body>
+</html>
