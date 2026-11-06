@@ -147,15 +147,15 @@ var infos = document.getElementById('infos');
 var paroles = document.getElementById('paroles');
 var message = document.getElementById('message');
 
-// gras et italique d'une seule ligne
-function mise_en_forme(ligne) {
-  return ligne
-    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+// gras et italique : les ** peuvent s'ouvrir et se fermer sur des lignes différentes
+function mise_en_forme(strophe) {
+  return strophe
+    .replace(/\*\*\*([\s\S]+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([\s\S]+?)\*/g, '<em>$1</em>');
 }
 
-// on échappe d'abord le HTML, puis on met en forme chaque ligne
+// on échappe d'abord le HTML, puis on met en forme chaque strophe
 function markdown(src) {
   var texte = src
     .replace(/&/g, '&amp;')
@@ -166,8 +166,8 @@ function markdown(src) {
   return texte
     .split(/\r?\n\s*\r?\n/)
     .map(function (strophe) {
-      var lignes = strophe.trim().split(/\r?\n/).map(mise_en_forme);
-      return '<p>' + lignes.join('<br>') + '</p>';
+      var html = mise_en_forme(strophe.trim());
+      return '<p>' + html.replace(/\r?\n/g, '<br>') + '</p>';
     })
     .join('');
 }
