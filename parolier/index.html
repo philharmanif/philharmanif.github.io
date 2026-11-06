@@ -119,7 +119,6 @@ footer a { color: var(--discret); }
 </head>
 <body>
 
-
 <main>
   <div class="choix">
     <button id="titre-btn" aria-haspopup="listbox" aria-expanded="false">
@@ -148,20 +147,27 @@ var infos = document.getElementById('infos');
 var paroles = document.getElementById('paroles');
 var message = document.getElementById('message');
 
-// on échappe d'abord le HTML, puis on remplace le markdown
-function markdown(src) {
-  var html = src
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+// gras et italique d'une seule ligne
+function mise_en_forme(ligne) {
+  return ligne
+    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>');
+}
+
+// on échappe d'abord le HTML, puis on met en forme chaque ligne
+function markdown(src) {
+  var texte = src
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 
   // une ligne vide = nouveau paragraphe (strophe), un retour à la ligne = <br>
-  return html
-    .split(/\n\s*\n/)
+  return texte
+    .split(/\r?\n\s*\r?\n/)
     .map(function (strophe) {
-      return '<p>' + strophe.trim().replace(/\n/g, '<br>') + '</p>';
+      var lignes = strophe.trim().split(/\r?\n/).map(mise_en_forme);
+      return '<p>' + lignes.join('<br>') + '</p>';
     })
     .join('');
 }
