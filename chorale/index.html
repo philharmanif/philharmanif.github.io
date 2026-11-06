@@ -171,6 +171,17 @@ button { font-family: inherit; cursor: pointer; }
 #onglets button.courant { background: var(--orange); color: #fff; }
 #paroles p { margin: 0 0 1.2rem; }
 
+#partition {
+  display: block;
+  width: 100%;
+  height: 80vh;
+  min-height: 480px;
+  margin-top: 0.6rem;
+  border: none;
+  border-radius: 10px;
+}
+#bloc-partition a { color: var(--discret); }
+
 #message { color: var(--discret); text-align: center; margin-top: 2rem; }
 
 footer { max-width: 44rem; margin: 3rem auto 0; text-align: center; font-size: 0.85rem; }
@@ -178,6 +189,10 @@ footer a { color: var(--discret); }
 </style>
 </head>
 <body>
+
+<header>
+  <a href="../"><img src="../pics/philharmanif.png" alt="La Philharmanif, retour à l'accueil"></a>
+</header>
 
 <main>
   <div class="choix">
@@ -213,6 +228,11 @@ footer a { color: var(--discret); }
       <div id="onglets"></div>
       <div id="paroles"></div>
     </div>
+
+    <div class="bloc" id="bloc-partition" hidden>
+      <a id="lien-partition" target="_blank">Ouvrir la partition dans un nouvel onglet</a>
+      <embed id="partition" type="application/pdf">
+    </div>
   </div>
 </main>
 
@@ -226,6 +246,7 @@ var audios = [];
 var enLecture = false;
 var solo = -1;
 var muets = [];
+var courant = -1;
 
 var bouton = document.getElementById('titre-btn');
 var titre = document.getElementById('titre');
@@ -311,7 +332,10 @@ function majProgression() {
 function synchroniser() {
   if (!audios.length) return;
   var t = audios[0].currentTime;
-  audios.forEach(function (a) { a.currentTime = t; });
+  audios.forEach(function (a) {
+    // inutile de toucher aux pistes déjà synchronisées
+    if (Math.abs(a.currentTime - t) > 0.05) a.currentTime = t;
+  });
 }
 
 function appliquerSons() {
@@ -421,8 +445,36 @@ function creerPiste(t, i) {
   return ligne;
 }
 
+// affiche partition.pdf sous les paroles, seulement si le fichier existe
+function afficherPartition(c, i) {
+  var bloc = document.getElementById('bloc-partition');
+  var pdf = document.getElementById('partition');
+  bloc.hidden = true;
+  pdf.removeAttribute('src');
+
+  var url = c.repo + '/partition.pdf';
+
+  // certains serveurs répondent mal aux requêtes HEAD : si ça échoue, on retente en GET
+  fetch(url, { method: 'HEAD' })
+    .then(function (r) {
+      return r.ok ? r : fetch(url);
+    })
+    .then(function (r) {
+      console.log('partition :', url, '->', r.status);
+      // si on a changé de chant entre-temps, on ne fait rien
+      if (!r.ok || courant !== i) return;
+      pdf.src = url;
+      document.getElementById('lien-partition').href = url;
+      bloc.hidden = false;
+    })
+    .catch(function (e) {
+      console.log('partition :', url, '-> erreur', e);
+    });
+}
+
 function charger(i) {
   var c = chansons[i];
+  courant = i;
   titre.textContent = c.titre;
 
   // on coupe les anciennes pistes
@@ -452,6 +504,7 @@ function charger(i) {
   }
   majProgression();
   afficherParoles(c);
+  afficherPartition(c, i);
 
   var boutons = liste.querySelectorAll('button');
   for (var k = 0; k < boutons.length; k++) {
