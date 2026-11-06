@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outil chorale</title>
+</head>
+<body>
+
+<h1>Outil chorale</h1>
+<p>Remplis les champs, copie la ligne obtenue et colle-la dans <code>chorale/chansons.json</code>.</p>
+
+<p>
+  <button type="button" id="gras" title="Gras (Ctrl+B)"><b>B</b></button>
+  <button type="button" id="italique" title="Italique (Ctrl+I)"><i>I</i></button>
+  <button type="button" id="effacer">Effacer</button>
+  <button type="button" id="exemple">Exemple</button>
+  <small>B et I s'appliquent aux paroles de la piste où tu as cliqué en dernier.</small>
+</p>
+
+<p>
+  <label>Titre<br>
+  <input type="text" id="titre" size="40"></label>
+</p>
+
+<p>
+  <label>Repo (nom du dossier dans <code>chorale/</code>)<br>
+  <input type="text" id="repo" size="40"></label><br>
+  <small>Si vide, il est déduit du titre.</small>
+</p>
+
+<p>
+  <label>Nombre de pistes<br>
+  <input type="number" id="nombre" min="1" max="30" value="4"></label>
+</p>
+
+<div id="pistes"></div>
+
+<h2>Ligne à ajouter</h2>
+<p>
+  <textarea id="sortie" rows="8" cols="60" readonly></textarea><br>
+  <button type="button" id="copier">Copier</button>
+  <small>(Le dernier élément du fichier ne doit pas finir par une virgule.)</small>
+</p>
+
+<dialog id="confirmation">
+  <p>Tout effacer ?</p>
+  <button type="button" id="oui">Oui</button>
+  <button type="button" id="non">Non</button>
+</dialog>
+
+<script>
+var titre = document.getElementById('titre');
+var repo = document.getElementById('repo');
+var nombre = document.getElementById('nombre');
+var pistes = document.getElementById('pistes');
+var sortie = document.getElementById('sortie');
+var confirmation = document.getElementById('confirmation');
+
+var derniere = null; // dernier champ de paroles utilisé
+
+// "Ténor Solo" devient "tenorsolo"
+function simplifier(texte) {
+  return texte
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+// entoure la sélection avec ** (gras) ou * (italique), ligne par ligne
+function entourer(marque) {
+  var t = derniere || pistes.querySelector('textarea');
+  if (!t) return;
+
+  var debut = t.selectionStart;
+  var fin = t.selectionEnd;
+  var v = t.value;
+
+  if (debut === fin) {
+    t.value = v.slice(0, debut) + marque + marque + v.slice(fin);
+    t.focus();
+    t.setSelectionRange(debut + marque.length, debut + marque.length);
+    maj();
+    return;
+  }
+
+  var choix = v.slice(debut, fin).split('\n').map(function (ligne) {
+    return ligne.trim() ? marque + ligne + marque : ligne;
+  }).join('\n');
+
+  t.value = v.slice(0, debut) + choix + v.slice(fin);
+  t.focus();
+  t.setSelectionRange(debut, debut + choix.length);
+  maj();
+}
+
+// un bloc par piste : nom, fichier et paroles
+function creerPiste(numero) {
+  var bloc = document.createElement('fieldset');
+  bloc.innerHTML =
+    '<legend>Piste ' + numero + '</legend>' +
+    '<p><label>Nom<br><input type="text" class="nom" size="30"></label></p>' +
+    '<p><label>Fichier audio<br><input type="text" class="fichier" size="30"></label></p>' +
+    '<p><label>Paroles<br><textarea class="paroles" rows="10" cols="60"></textarea></label></p>';
+
+  var paroles = bloc.querySelector('.paroles');
+  paroles.addEventListener('focus', function () { derniere = paroles; });
+  paroles.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'b') {
+        e.preventDefault();
+        entourer('**');
+      } else if (e.key === 'i') {
+        e.preventDefault();
+        entourer('*');
+      }
+    }
+  });
+  bloc.addEventListener('input', maj);
+  return bloc;
+}
+
+// ajoute ou retire des pistes pour arriver au nombre demandé
+function ajuster() {
+  var n = parseInt(nombre.value, 10);
+  if (!(n >= 1)) n = 1;
+  if (n > 30) n = 30;
+
+  while (pistes.children.length < n) {
+    pistes.appendChild(creerPiste(pistes.children.length + 1));
+  }
+  while (pistes.children.length > n) {
+    var derniereBloc = pistes.lastElementChild;
+    if (derniere && derniereBloc.contains(derniere)) derniere = null;
+    pistes.removeChild(derniereBloc);
+  }
+  maj();
+}
+
+function maj() {
+  var chanson = {
+    titre: titre.value.trim(),
+    repo: repo.value.trim() || simplifier(titre.value),
+    tracks: [],
+    paroles: []
+  };
+
+  // une piste = un nom, un fichier et une parole : les deux tableaux ont toujours la même taille
+  for (var i = 0; i < pistes.children.length; i++) {
+    var bloc = pistes.children[i];
+    var nom = bloc.querySelector('.nom').value.trim();
+    var champFichier = bloc.querySelector('.fichier');
+
+    // si le fichier est vide, on le déduit du nom
+    var auto = nom ? simplifier(nom) + '.mp3' : '';
+    champFichier.placeholder = auto;
+    var fichier = champFichier.value.trim() || auto;
+
+    chanson.tracks.push({ nom: nom, fichier: fichier });
+    chanson.paroles.push(bloc.querySelector('.paroles').value.trim());
+  }
+
+  sortie.value = JSON.stringify(chanson) + ',';
+}
+
+function remplir(n, valeurs) {
+  nombre.value = n;
+  ajuster();
+  for (var i = 0; i < n; i++) {
+    var bloc = pistes.children[i];
+    bloc.querySelector('.nom').value = valeurs[i].nom;
+    bloc.querySelector('.fichier').value = valeurs[i].fichier || '';
+    bloc.querySelector('.paroles').value = valeurs[i].paroles;
+  }
+  maj();
+}
+
+document.getElementById('gras').addEventListener('click', function () {
+  entourer('**');
+});
+document.getElementById('italique').addEventListener('click', function () {
+  entourer('*');
+});
+
+document.getElementById('effacer').addEventListener('click', function () {
+  confirmation.showModal();
+});
+document.getElementById('non').addEventListener('click', function () {
+  confirmation.close();
+});
+document.getElementById('oui').addEventListener('click', function () {
+  titre.value = '';
+  repo.value = '';
+  pistes.innerHTML = '';
+  derniere = null;
+  nombre.value = 4;
+  ajuster();
+  confirmation.close();
+});
+
+document.getElementById('exemple').addEventListener('click', function () {
+  titre.value = "Chanson d'exemple";
+  repo.value = 'exemple';
+  remplir(2, [
+    { nom: 'Soprane', fichier: 'soprano.mp3', paroles: "Voici des **paroles** en gras\nEt du texte en *italique*\n\nUn deuxième couplet avec l'apostrophe" },
+    { nom: 'Alto', fichier: '', paroles: "Les paroles de l'alto\n**Le refrain en gras**" }
+  ]);
+});
+
+titre.addEventListener('input', maj);
+repo.addEventListener('input', maj);
+nombre.addEventListener('change', ajuster);
+
+document.getElementById('copier').addEventListener('click', function () {
+  sortie.select();
+  document.execCommand('copy');
+});
+
+ajuster();
+</script>
+
+</body>
+</html>
