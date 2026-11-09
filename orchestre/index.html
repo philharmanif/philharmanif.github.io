@@ -1,24 +1,569 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Orchestre – La Philharmanif</title>
-  <link rel="icon" type="image/png" href="../pics/favicon.png">
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #fdf3ee;
-      color: #ff3d2e;
-      font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
-      font-size: 2.5rem;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chorale - La Philharmanif</title>
+<link rel="icon" type="image/png" href="../pics/favicon.png">
+<style>
+:root {
+  --fond: #fdf3ee;
+  --rouge: #ff3d2e;
+  --orange: #ff8a4c;
+  --texte: #3a2a25;
+  --discret: #8a4a3c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 1.5rem 1rem 3rem;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+main { max-width: 44rem; margin: 0 auto; }
+
+header img {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  margin: 0 auto 1.5rem;
+  border-radius: 16px;
+}
+
+button { font-family: inherit; cursor: pointer; }
+
+/* menu déroulant (le même que le parolier) */
+.choix { position: relative; }
+
+#titre-btn {
+  width: 100%;
+  padding: 0.7rem 1.4rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--rouge), var(--orange));
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+}
+#titre-btn:hover { filter: brightness(1.08); }
+
+#liste {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0.4rem 0 0;
+  padding: 0.4rem;
+  list-style: none;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: #fff;
+  border: 2px solid var(--orange);
+  border-radius: 18px;
+  z-index: 10;
+}
+#liste.ouverte { display: block; }
+#liste button {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--texte);
+  font-size: 1rem;
+  text-align: left;
+}
+#liste button:hover { background: var(--fond); }
+#liste button.courante { font-weight: bold; color: var(--rouge); }
+
+/* le lecteur */
+#lecteur { margin-top: 1.5rem; }
+
+.bloc {
+  background: #fff;
+  border-radius: 18px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+#temps { text-align: center; font-size: 1.2rem; }
+
+#barre {
+  height: 36px;
+  margin: 0.8rem 0;
+  background: var(--fond);
+  border-radius: 10px;
+  cursor: pointer;
+  overflow: hidden;
+}
+#progres {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--rouge), var(--orange));
+}
+
+.boutons {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.boutons button, .petit {
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--orange);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--texte);
+  font-size: 1rem;
+}
+.boutons button:hover, .petit:hover { background: var(--fond); }
+#play {
+  border: none;
+  background: linear-gradient(90deg, var(--rouge), var(--orange));
+  color: #fff;
+  font-weight: bold;
+  min-width: 6rem;
+}
+#play:hover { filter: brightness(1.08); background: linear-gradient(90deg, var(--rouge), var(--orange)); }
+
+.sous-boutons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.8rem;
+  font-size: 0.95rem;
+}
+
+/* les pistes */
+.piste { padding: 0.6rem 0; border-bottom: 1px solid var(--fond); }
+.piste:last-child { border-bottom: none; }
+.piste-nom { font-weight: bold; margin-bottom: 0.3rem; }
+.piste-reglages { display: flex; align-items: center; gap: 0.5rem; }
+.piste-reglages input[type=range] { flex: 1; min-width: 0; accent-color: var(--rouge); }
+.piste-reglages .vol { min-width: 3rem; font-size: 0.85rem; color: var(--discret); }
+.petit { padding: 0.2rem 0.6rem; font-size: 0.8rem; }
+.petit.actif { background: var(--rouge); border-color: var(--rouge); color: #fff; }
+
+/* les paroles */
+#onglets { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+#onglets button {
+  padding: 0.4rem 0.9rem;
+  border: 2px solid var(--orange);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--texte);
+  font-size: 0.95rem;
+}
+#onglets button.courant { background: var(--orange); color: #fff; }
+#paroles p { margin: 0 0 1.2rem; }
+
+#partition {
+  display: block;
+  width: 100%;
+  height: 80vh;
+  min-height: 480px;
+  margin-top: 0.6rem;
+  border: none;
+  border-radius: 10px;
+}
+#bloc-partition a { color: var(--discret); }
+
+#message { color: var(--discret); text-align: center; margin-top: 2rem; }
+
+footer { max-width: 44rem; margin: 3rem auto 0; text-align: center; font-size: 0.85rem; }
+footer a { color: var(--discret); }
+</style>
 </head>
-<body>soon</body>
+<body>
+
+<header>
+  <a href="../"><img src="../pics/philharmanif.png" alt="La Philharmanif, retour à l'accueil"></a>
+</header>
+
+<main>
+  <div class="choix">
+    <button id="titre-btn" aria-haspopup="listbox" aria-expanded="false">
+      <span id="titre">Choisir un chant</span>
+      <span aria-hidden="true">▾</span>
+    </button>
+    <ul id="liste" role="listbox"></ul>
+  </div>
+
+  <p id="message">Chargement des chants…</p>
+
+  <div id="lecteur" hidden>
+    <div class="bloc">
+      <div id="temps">0:00 / 0:00</div>
+      <div id="barre"><div id="progres"></div></div>
+      <div class="boutons">
+        <button data-saut="-10">-10s</button>
+        <button data-saut="-5">-5s</button>
+        <button id="play">PLAY</button>
+        <button data-saut="5">+5s</button>
+        <button data-saut="10">+10s</button>
+      </div>
+      <div class="sous-boutons">
+        <button class="petit" id="resync">Resynchroniser les pistes</button>
+        <label><input type="checkbox" id="boucle"> Lecture en boucle</label>
+      </div>
+    </div>
+
+    <div class="bloc" id="pistes"></div>
+
+    <div class="bloc" id="bloc-paroles" hidden>
+      <div id="onglets"></div>
+      <div id="paroles"></div>
+    </div>
+
+    <div class="bloc" id="bloc-partition" hidden>
+      <a id="lien-partition" target="_blank">Ouvrir la partition dans un nouvel onglet</a>
+      <embed id="partition" type="application/pdf">
+    </div>
+  </div>
+</main>
+
+<footer>
+  <a href="../">Retour à l'accueil</a>
+</footer>
+
+<script>
+var chansons = [];
+var audios = [];
+var enLecture = false;
+var solo = -1;
+var muets = [];
+var courant = -1;
+
+var bouton = document.getElementById('titre-btn');
+var titre = document.getElementById('titre');
+var liste = document.getElementById('liste');
+var message = document.getElementById('message');
+var lecteur = document.getElementById('lecteur');
+var boutonPlay = document.getElementById('play');
+var boucle = document.getElementById('boucle');
+
+/* ---------- paroles (même système que le parolier) ---------- */
+
+function mise_en_forme(strophe) {
+  return strophe
+    .replace(/\*\*\*([\s\S]+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([\s\S]+?)\*/g, '<em>$1</em>');
+}
+
+function markdown(src) {
+  var texte = src
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  return texte
+    .split(/\r?\n\s*\r?\n/)
+    .map(function (strophe) {
+      var html = mise_en_forme(strophe.trim());
+      return '<p>' + html.replace(/\r?\n/g, '<br>') + '</p>';
+    })
+    .join('');
+}
+
+function afficherParoles(c) {
+  var onglets = document.getElementById('onglets');
+  var zone = document.getElementById('paroles');
+  onglets.innerHTML = '';
+  zone.innerHTML = '';
+
+  // un onglet par piste qui a des paroles
+  var premier = true;
+  c.tracks.forEach(function (t, i) {
+    var texte = c.paroles && c.paroles[i];
+    if (!texte || !texte.trim()) return;
+
+    var b = document.createElement('button');
+    b.textContent = t.nom;
+    b.addEventListener('click', function () {
+      zone.innerHTML = markdown(texte);
+      var autres = onglets.querySelectorAll('button');
+      for (var k = 0; k < autres.length; k++) autres[k].classList.remove('courant');
+      b.classList.add('courant');
+    });
+    onglets.appendChild(b);
+
+    if (premier) {
+      b.click();
+      premier = false;
+    }
+  });
+
+  document.getElementById('bloc-paroles').hidden = premier;
+}
+
+/* ---------- lecture ---------- */
+
+function formatTemps(s) {
+  if (isNaN(s)) return '0:00';
+  var m = Math.floor(s / 60);
+  var r = Math.floor(s % 60);
+  return m + ':' + (r < 10 ? '0' : '') + r;
+}
+
+function majProgression() {
+  if (!audios.length) return;
+  var a = audios[0];
+  var pourcent = (a.currentTime / a.duration) * 100 || 0;
+  document.getElementById('progres').style.width = pourcent + '%';
+  document.getElementById('temps').textContent = formatTemps(a.currentTime) + ' / ' + formatTemps(a.duration);
+}
+
+// toutes les pistes se calent sur la première
+function synchroniser() {
+  if (!audios.length) return;
+  var t = audios[0].currentTime;
+  audios.forEach(function (a) {
+    // inutile de toucher aux pistes déjà synchronisées
+    if (Math.abs(a.currentTime - t) > 0.05) a.currentTime = t;
+  });
+}
+
+function appliquerSons() {
+  audios.forEach(function (a, i) {
+    a.muted = solo >= 0 ? i !== solo : muets[i];
+  });
+}
+
+function jouer() {
+  synchroniser();
+  audios.forEach(function (a) { a.play().catch(function () {}); });
+  enLecture = true;
+  boutonPlay.textContent = 'PAUSE';
+}
+
+function pause() {
+  audios.forEach(function (a) { a.pause(); });
+  enLecture = false;
+  boutonPlay.textContent = 'PLAY';
+}
+
+function aller(temps) {
+  var etait = enLecture;
+  if (etait) audios.forEach(function (a) { a.pause(); });
+  audios.forEach(function (a) { a.currentTime = temps; });
+  if (etait) setTimeout(jouer, 50);
+}
+
+boutonPlay.addEventListener('click', function () {
+  if (enLecture) pause(); else jouer();
+});
+
+document.querySelectorAll('[data-saut]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    if (!audios.length) return;
+    aller(Math.max(0, audios[0].currentTime + parseInt(b.dataset.saut, 10)));
+  });
+});
+
+document.getElementById('barre').addEventListener('click', function (e) {
+  if (!audios.length) return;
+  var r = this.getBoundingClientRect();
+  aller(((e.clientX - r.left) / r.width) * (audios[0].duration || 0));
+});
+
+document.getElementById('resync').addEventListener('click', function () {
+  var etait = enLecture;
+  if (etait) audios.forEach(function (a) { a.pause(); });
+  synchroniser();
+  if (etait) setTimeout(jouer, 100);
+});
+
+boucle.addEventListener('change', function () {
+  audios.forEach(function (a) { a.loop = boucle.checked; });
+});
+
+/* ---------- pistes ---------- */
+
+function creerPiste(t, i) {
+  var ligne = document.createElement('div');
+  ligne.className = 'piste';
+
+  var nom = document.createElement('div');
+  nom.className = 'piste-nom';
+  nom.textContent = t.nom;
+
+  var reglages = document.createElement('div');
+  reglages.className = 'piste-reglages';
+
+  var btnSolo = document.createElement('button');
+  btnSolo.className = 'petit';
+  btnSolo.textContent = 'SOLO';
+  btnSolo.addEventListener('click', function () {
+    solo = solo === i ? -1 : i;
+    var tous = document.querySelectorAll('.btn-solo');
+    for (var k = 0; k < tous.length; k++) tous[k].classList.toggle('actif', k === solo);
+    appliquerSons();
+  });
+  btnSolo.classList.add('btn-solo');
+
+  var btnMute = document.createElement('button');
+  btnMute.className = 'petit';
+  btnMute.textContent = 'MUET';
+  btnMute.addEventListener('click', function () {
+    muets[i] = !muets[i];
+    btnMute.classList.toggle('actif', muets[i]);
+    appliquerSons();
+  });
+
+  var curseur = document.createElement('input');
+  curseur.type = 'range';
+  curseur.min = 0;
+  curseur.max = 100;
+  curseur.value = 100;
+
+  var vol = document.createElement('span');
+  vol.className = 'vol';
+  vol.textContent = '100%';
+
+  curseur.addEventListener('input', function () {
+    audios[i].volume = curseur.value / 100;
+    vol.textContent = curseur.value + '%';
+  });
+
+  reglages.append(btnSolo, btnMute, curseur, vol);
+  ligne.append(nom, reglages);
+  return ligne;
+}
+
+// affiche partition.pdf sous les paroles, seulement si le fichier existe
+function afficherPartition(c, i) {
+  var bloc = document.getElementById('bloc-partition');
+  var pdf = document.getElementById('partition');
+  bloc.hidden = true;
+  pdf.removeAttribute('src');
+
+  var url = c.repo + '/partition.pdf';
+
+  // certains serveurs répondent mal aux requêtes HEAD : si ça échoue, on retente en GET
+  fetch(url, { method: 'HEAD' })
+    .then(function (r) {
+      return r.ok ? r : fetch(url);
+    })
+    .then(function (r) {
+      console.log('partition :', url, '->', r.status);
+      // si on a changé de chant entre-temps, on ne fait rien
+      if (!r.ok || courant !== i) return;
+      pdf.src = url;
+      document.getElementById('lien-partition').href = url;
+      bloc.hidden = false;
+    })
+    .catch(function (e) {
+      console.log('partition :', url, '-> erreur', e);
+    });
+}
+
+function charger(i) {
+  var c = chansons[i];
+  courant = i;
+  titre.textContent = c.titre;
+
+  // on coupe les anciennes pistes
+  audios.forEach(function (a) { a.pause(); a.src = ''; });
+  audios = [];
+  muets = [];
+  solo = -1;
+  enLecture = false;
+  boutonPlay.textContent = 'PLAY';
+
+  var zone = document.getElementById('pistes');
+  zone.innerHTML = '';
+
+  c.tracks.forEach(function (t, k) {
+    var a = new Audio();
+    a.preload = 'auto';
+    a.loop = boucle.checked;
+    a.src = c.repo + '/' + t.fichier;
+    audios.push(a);
+    muets.push(false);
+    zone.appendChild(creerPiste(t, k));
+  });
+
+  if (audios.length) {
+    audios[0].addEventListener('timeupdate', majProgression);
+    audios[0].addEventListener('loadedmetadata', majProgression);
+  }
+  majProgression();
+  afficherParoles(c);
+  afficherPartition(c, i);
+
+  var boutons = liste.querySelectorAll('button');
+  for (var k = 0; k < boutons.length; k++) {
+    boutons[k].classList.toggle('courante', k === i);
+  }
+  lecteur.hidden = false;
+  history.replaceState(null, '', '#' + (i + 1));
+}
+
+/* ---------- menu et chargement du json ---------- */
+
+function ouvrir(oui) {
+  liste.classList.toggle('ouverte', oui);
+  bouton.setAttribute('aria-expanded', oui);
+}
+
+bouton.addEventListener('click', function () {
+  ouvrir(!liste.classList.contains('ouverte'));
+});
+document.addEventListener('click', function (e) {
+  if (!e.target.closest('.choix')) ouvrir(false);
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') ouvrir(false);
+});
+
+fetch('chansons.json')
+  .then(function (r) {
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  })
+  .then(function (data) {
+    chansons = data;
+    if (!chansons.length) {
+      message.textContent = 'Aucun chant pour le moment.';
+      return;
+    }
+
+    chansons.forEach(function (c, i) {
+      var li = document.createElement('li');
+      var b = document.createElement('button');
+      b.textContent = c.titre;
+      b.addEventListener('click', function () {
+        charger(i);
+        ouvrir(false);
+      });
+      li.appendChild(b);
+      liste.appendChild(li);
+    });
+
+    message.hidden = true;
+
+    var n = parseInt(location.hash.slice(1), 10);
+    charger(n >= 1 && n <= chansons.length ? n - 1 : 0);
+  })
+  .catch(function () {
+    message.textContent = 'Impossible de charger chansons.json.';
+  });
+</script>
+
+</body>
 </html>
