@@ -189,6 +189,20 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ---------- parolier ---------- */
 
+.gros-choix {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  font-size: 1.5rem;
+}
+.gros-choix input { width: 1.6rem; height: 1.6rem; margin: 0; }
+
+/* case "Gros caractères" cochée */
+body.gros #paroles { font-size: 1.9rem; line-height: 1.6; color: #000; }
+body.gros #paroles p { margin-bottom: 1.8rem; }
+body.gros .infos { font-size: 1.3rem; color: var(--texte); }
+
 .infos { margin: 1.5rem 0 1rem; color: var(--discret); font-size: 0.95rem; }
 .infos p { margin: 0.2rem 0; }
 
@@ -238,7 +252,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   margin-top: 0.8rem;
   font-size: 0.95rem;
 }
-.sous-boutons label { font-family: var(--police-boutons); font-size: 1.05rem; cursor: pointer; }
+.sous-boutons label, .gros-choix { font-family: var(--police-boutons); font-size: 1.05rem; cursor: pointer; }
 
 .piste { padding: 0.6rem 0; border-bottom: 1px solid var(--fond); }
 .piste:last-child { border-bottom: none; }

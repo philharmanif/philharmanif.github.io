@@ -23,6 +23,8 @@
     <ul id="liste" role="listbox"></ul>
   </div>
 
+  <label class="gros-choix"><input type="checkbox" id="gros"> Gros caractères</label>
+
   <div class="infos" id="infos"></div>
   <div id="paroles"></div>
   <p id="message">Chargement des chansons…</p>
@@ -41,6 +43,25 @@ var liste = document.getElementById('liste');
 var infos = document.getElementById('infos');
 var paroles = document.getElementById('paroles');
 var message = document.getElementById('message');
+
+// gros caractères : la case est mémorisée pour les prochaines visites
+var gros = document.getElementById('gros');
+
+function gros_caracteres(oui) {
+  document.body.classList.toggle('gros', oui);
+  gros.checked = oui;
+}
+
+try {
+  gros_caracteres(localStorage.getItem('gros-caracteres') === '1');
+} catch (e) {}
+
+gros.addEventListener('change', function () {
+  gros_caracteres(gros.checked);
+  try {
+    localStorage.setItem('gros-caracteres', gros.checked ? '1' : '0');
+  } catch (e) {}
+});
 
 // gras et italique : les ** peuvent s'ouvrir et se fermer sur des lignes différentes
 function mise_en_forme(strophe) {
