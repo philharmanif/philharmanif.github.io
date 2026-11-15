@@ -27,9 +27,11 @@ puis ouvre http://localhost:8000/parolier/.
 
 ```
 index.html          page d'accueil
+style.css           le style commun à toutes les pages
+fonts/              la police des boutons (Londrina Solid, licence OFL)
 parolier/           les paroles (index.html + chansons.json)
 tools/paroles/      l'outil pour écrire une entrée de chansons.json
-orchestre/          à venir
-chorale/            à venir
+orchestre/          le lecteur de l'orchestre
+chorale/            le lecteur de la chorale
 pics/               logo et favicon
 ```

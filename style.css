@@ -1,0 +1,263 @@
+/* La Philharmanif - feuille de style commune à toutes les pages */
+
+/* Londrina Solid (Google Fonts, licence OFL), hébergée ici pour ne pas appeler Google */
+@font-face {
+  font-family: "Londrina Solid";
+  src: url("fonts/LondrinaSolid-Regular.woff2") format("woff2");
+  font-display: swap;
+}
+
+:root {
+  --fond: #fdf3ee;
+  --rouge: #ff3d2e;
+  --rouge-fonce: #d92e1f;
+  --orange: #ff8a4c;
+  --texte: #3a2a25;
+  --discret: #8a4a3c;
+
+  --police: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --police-boutons: "Londrina Solid", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --rayon: 3px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 1.5rem 1rem 3rem;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: var(--police);
+  line-height: 1.5;
+}
+
+main { max-width: 44rem; margin: 0 auto; }
+
+header img {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  margin: 0 auto 1.5rem;
+  border-radius: var(--rayon);
+}
+
+footer {
+  max-width: 44rem;
+  margin: 3rem auto 0;
+  text-align: center;
+  font-size: 0.85rem;
+}
+footer a { color: var(--discret); }
+
+#message { color: var(--discret); text-align: center; margin-top: 2rem; }
+
+
+/* ---------- boutons ---------- */
+
+button {
+  font-family: var(--police-boutons);
+  font-weight: normal;
+  cursor: pointer;
+  border-radius: var(--rayon);
+}
+button:focus-visible,
+nav a:focus-visible { outline: 3px solid var(--rouge); outline-offset: 3px; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* bouton plein : choix de la chanson / de l'instrument, PLAY, liens de l'accueil */
+#titre-btn, #instr-btn, #play, .accueil nav a {
+  border: 2px solid var(--rouge);
+  background: var(--rouge);
+  color: #fff;
+}
+#titre-btn:hover:not(:disabled),
+#instr-btn:hover:not(:disabled),
+#play:hover,
+.accueil nav a:hover {
+  background: var(--rouge-fonce);
+  border-color: var(--rouge-fonce);
+}
+
+/* bouton avec contour : sauts, resynchro, solo/muet, onglets */
+.boutons button, .petit, #onglets button {
+  border: 2px solid var(--orange);
+  background: #fff;
+  color: var(--texte);
+}
+.boutons button:hover, .petit:hover, #onglets button:hover { background: var(--fond); }
+#play { min-width: 6rem; }
+.boutons #play { border-color: var(--rouge); background: var(--rouge); color: #fff; }
+.boutons #play:hover { background: var(--rouge-fonce); border-color: var(--rouge-fonce); }
+
+.petit.actif,
+#onglets button.courant {
+  background: var(--rouge);
+  border-color: var(--rouge);
+  color: #fff;
+}
+
+
+/* ---------- accueil ---------- */
+
+.accueil {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+}
+.accueil img {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  border-radius: var(--rayon);
+}
+.accueil nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.accueil nav a {
+  padding: 0.7rem 1.6rem;
+  border-radius: var(--rayon);
+  font-family: var(--police-boutons);
+  font-size: 1.3rem;
+  text-decoration: none;
+}
+.accueil footer {
+  margin-top: auto;
+  padding-top: 3rem;
+  font-size: 0.8rem;
+  color: var(--discret);
+}
+.accueil footer a { color: inherit; }
+
+
+/* ---------- menus déroulants (parolier, chorale, orchestre) ---------- */
+
+.choix { position: relative; }
+
+#titre-btn, #instr-btn {
+  width: 100%;
+  padding: 0.7rem 1.4rem;
+  font-size: 1.3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+}
+#instr-btn { margin-top: 0.8rem; font-size: 1.1rem; }
+
+#liste, #liste-instr {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0.4rem 0 0;
+  padding: 0.4rem;
+  list-style: none;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: #fff;
+  border: 2px solid var(--orange);
+  border-radius: var(--rayon);
+  z-index: 10;
+}
+#liste.ouverte, #liste-instr.ouverte { display: block; }
+
+#liste button, #liste-instr button {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 2px;
+  background: none;
+  color: var(--texte);
+  font-size: 1rem;
+  text-align: left;
+}
+#liste button:hover, #liste-instr button:hover,
+#liste button:focus-visible, #liste-instr button:focus-visible { background: var(--fond); outline: none; }
+#liste button.courante, #liste-instr button.courante {
+  color: var(--rouge-fonce);
+  box-shadow: inset 3px 0 0 var(--rouge);
+}
+
+
+/* ---------- parolier ---------- */
+
+.infos { margin: 1.5rem 0 1rem; color: var(--discret); font-size: 0.95rem; }
+.infos p { margin: 0.2rem 0; }
+
+#paroles { font-size: 1.1rem; }
+#paroles p { margin: 0 0 1.3rem; }
+
+
+/* ---------- lecteur (chorale, orchestre) ---------- */
+
+#lecteur { margin-top: 1.5rem; }
+
+.bloc {
+  background: #fff;
+  border-radius: var(--rayon);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.bloc #paroles { font-size: 1rem; }
+.bloc #paroles p { margin: 0 0 1.2rem; }
+
+#temps { text-align: center; font-size: 1.2rem; }
+
+#barre {
+  height: 36px;
+  margin: 0.8rem 0;
+  background: var(--fond);
+  border-radius: var(--rayon);
+  cursor: pointer;
+  overflow: hidden;
+}
+#progres { height: 100%; width: 0; background: var(--rouge); }
+
+.boutons {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.boutons button { padding: 0.5rem 1rem; font-size: 1rem; }
+
+.sous-boutons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.8rem;
+  font-size: 0.95rem;
+}
+.sous-boutons label { font-family: var(--police-boutons); font-size: 1.05rem; cursor: pointer; }
+
+.piste { padding: 0.6rem 0; border-bottom: 1px solid var(--fond); }
+.piste:last-child { border-bottom: none; }
+.piste-nom { font-weight: bold; margin-bottom: 0.3rem; }
+.piste-reglages { display: flex; align-items: center; gap: 0.5rem; }
+.piste-reglages input[type=range] { flex: 1; min-width: 0; accent-color: var(--rouge); }
+.piste-reglages .vol { min-width: 3rem; font-size: 0.85rem; color: var(--discret); }
+.petit { padding: 0.2rem 0.6rem; font-size: 0.8rem; }
+
+#onglets { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+#onglets button { padding: 0.4rem 0.9rem; font-size: 0.95rem; }
+
+#partition {
+  display: block;
+  width: 100%;
+  height: 80vh;
+  min-height: 480px;
+  margin-top: 0.6rem;
+  border: none;
+  border-radius: var(--rayon);
+}
+#bloc-partition a { color: var(--discret); }
