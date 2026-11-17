@@ -277,14 +277,15 @@ function creerPiste(t, i) {
   return ligne;
 }
 
-// affiche partition.pdf sous les paroles, seulement si le fichier existe
-function afficherPartition(c, i) {
+// affiche la partition de la piste k sous les paroles, seulement si le fichier existe
+// (même nom que le mp3, avec .pdf à la place)
+function afficherPartition(c, i, k) {
   var bloc = document.getElementById('bloc-partition');
   var pdf = document.getElementById('partition');
   bloc.hidden = true;
   pdf.removeAttribute('src');
 
-  var url = c.repo + '/partition.pdf';
+  var url = c.repo + '/' + c.tracks[k].fichier.replace(/\.mp3$/i, '.pdf');
 
   // certains serveurs répondent mal aux requêtes HEAD : si ça échoue, on retente en GET
   fetch(url, { method: 'HEAD' })
@@ -293,8 +294,8 @@ function afficherPartition(c, i) {
     })
     .then(function (r) {
       console.log('partition :', url, '->', r.status);
-      // si on a changé de chant entre-temps, on ne fait rien
-      if (!r.ok || courant !== i) return;
+      // si on a changé de chant ou d'instrument entre-temps, on ne fait rien
+      if (!r.ok || courant !== i || instrCourant !== k) return;
       pdf.src = url;
       document.getElementById('lien-partition').href = url;
       bloc.hidden = false;
@@ -304,10 +305,12 @@ function afficherPartition(c, i) {
     });
 }
 
-// l'index de la piste "Tutti" (-1 s'il n'y en a pas)
+// l'index de la piste du conducteur, c'est-à-dire le Tutti (-1 s'il n'y en a pas)
+// dans le json elle s'appelle "Conducteur" ; l'ancien nom "Tutti" marche encore
 function indexTutti(c) {
   for (var k = 0; k < c.tracks.length; k++) {
-    if (c.tracks[k].nom.trim().toLowerCase() === 'tutti') return k;
+    var nom = c.tracks[k].nom.trim().toLowerCase();
+    if (nom === 'conducteur' || nom === 'tutti') return k;
   }
   return -1;
 }
@@ -344,11 +347,17 @@ function charger(i, instr) {
   listeInstr.innerHTML = '';
   titreInstr.textContent = "Choisir l'instrument";
 
+  // le conducteur passe en premier
+  var ordre = [];
+  if (tutti >= 0) ordre.push(tutti);
   c.tracks.forEach(function (t, k) {
-    if (k === tutti) return;
+    if (k !== tutti) ordre.push(k);
+  });
+
+  ordre.forEach(function (k) {
     var li = document.createElement('li');
     var b = document.createElement('button');
-    b.textContent = t.nom;
+    b.textContent = c.tracks[k].nom;
     b.dataset.piste = k;
     b.addEventListener('click', function () {
       chargerInstrument(k);
@@ -361,10 +370,11 @@ function charger(i, instr) {
   boutonInstr.disabled = listeInstr.children.length === 0;
   history.replaceState(null, '', '#' + (i + 1));
 
-  if (instr >= 0 && instr < c.tracks.length && instr !== tutti) chargerInstrument(instr);
+  if (instr >= 0 && instr < c.tracks.length) chargerInstrument(instr);
 }
 
 // choix de l'instrument : on charge Tutti + cet instrument, et rien d'autre
+// (le conducteur, c'est le Tutti tout seul)
 function chargerInstrument(k) {
   var c = chansons[courant];
   var tutti = indexTutti(c);
@@ -378,7 +388,7 @@ function chargerInstrument(k) {
 
   arreterPistes();
 
-  var indices = tutti >= 0 ? [tutti, k] : [k];
+  var indices = (k === tutti || tutti < 0) ? [k] : [tutti, k];
   var zone = document.getElementById('pistes');
 
   indices.forEach(function (n, pos) {
@@ -396,7 +406,7 @@ function chargerInstrument(k) {
   audios[0].addEventListener('loadedmetadata', majProgression);
   majProgression();
   afficherParoles(c, indices);
-  afficherPartition(c, courant);
+  afficherPartition(c, courant, k);
 
   lecteur.hidden = false;
   history.replaceState(null, '', '#' + (courant + 1) + '-' + (k + 1));
